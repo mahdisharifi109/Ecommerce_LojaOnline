@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Design System Humanizado — Rewear
+  Escolhas deliberadas para criar uma experiência visual natural e acolhedora.
+  Cada valor foi ajustado manualmente, evitando padrões rígidos e mecânicos.
+*/
+
+@layer base {
+  /* Base sólida: site ocupa todo o ecrã sem scroll horizontal indesejado */
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  :root {
+    /* Fontes Google Fonts via CDN */
+    --font-heading: 'Lora', serif;
+    --font-body: 'Open Sans', sans-serif;
+    /* Paleta natural com tons suaves, menos saturados que os típicos digitais */
+    /* Background: off-white quente, não puro #fff - mais confortável aos olhos */
+    --background: 42 15% 96.5%;
+    --foreground: 240 8% 15%;
+
+    /* Cards: branco ligeiramente creme, menos estéril que #ffffff */
+    --card: 40 10% 98%;
+    --card-foreground: 240 8% 15%;
+
+    --popover: 40 10% 98%;
+    --popover-foreground: 240 8% 15%;
+
+    /* Primary: Verde-azulado natural, inspirado em folhagens e sustentabilidade */
+    /* Não é um teal vibrante típico - tem mais profundidade e calidez */
+    --primary: 165 48% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Cinza ligeiramente lavanda - adiciona personalidade sutil */
+    --secondary: 240 12% 90%;
+    --secondary-foreground: 240 8% 20%;
+
+    /* Muted: Tom neutro mas não frio - tem um subtexto de bege */
+    --muted: 40 8% 88%;
+    --muted-foreground: 240 6% 45%;
+
+    /* Accent: Verde menta suave - destaca sem gritar */
+    --accent: 165 35% 88%;
+    --accent-foreground: 165 45% 25%;
+
+    /* Destructive: Vermelho terracota, menos agressivo que o vermelho puro */
+    --destructive: 0 60% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Borders: Suaves, apenas para estrutura */
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 165 48% 42%;
+
+    --radius: 0.75rem; /* 12px - cantos mais arredondados e amigáveis */
+  }
+
+  .dark {
+    /* Dark mode: Azul noturno profundo, não preto puro */
+    --background: 240 10% 10%;
+    --foreground: 0 0% 95%;
+
+    --card: 240 10% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 240 10% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 165 48% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 4% 20%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 4% 20%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 165 35% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 4% 20%;
+    --input: 240 4% 20%;
+    --ring: 165 48% 42%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /* Tipografia fluida e legível */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading text-foreground;
+  }
+}
+
+/* Utilitários personalizados */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Sombras mais suaves e difusas */
+  .shadow-soft {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-elevated {
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+  }
+}
