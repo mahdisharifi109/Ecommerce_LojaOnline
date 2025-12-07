@@ -1,0 +1,1 @@
+import{j as g}from"./vendor-ui-T5L2aXSd.js";function c({src:e,alt:o,width:r,height:n,className:s,fill:a,style:t,...i}){const l=a?{position:"absolute",height:"100%",width:"100%",inset:0,objectFit:"cover",...t}:t||{};return g.jsx("img",{src:e,alt:o,width:r,height:n,className:s,style:l,loading:i.priority?"eager":"lazy",...i})}export{c as I};
