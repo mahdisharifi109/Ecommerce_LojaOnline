@@ -32,6 +32,7 @@ export function SearchBar({ className }: { className?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchQuery(searchParams.get("q") || "");
   }, [searchParams]);
 

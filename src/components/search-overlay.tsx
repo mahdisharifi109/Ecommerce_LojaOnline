@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, Search, ArrowRight, Leaf, Recycle, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -75,22 +75,8 @@ interface SearchOverlayProps {
 
 export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any>(null);
   const { products } = useProducts();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
+  const results = useMemo(() => {
     if (query.length > 1) {
       const lowerQuery = query.toLowerCase();
       
@@ -111,7 +97,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
       }).slice(0, 5);
 
       if (filteredProducts.length > 0) {
-        setResults({
+        return {
           suggestions: [],
           collections: [],
           products: filteredProducts.map((p) => ({
@@ -121,18 +107,28 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
             image: p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : "",
             eco: p.condition
           }))
-        });
-      } else {
-        setResults(null);
+        };
       }
-    } else {
-      setResults(null);
     }
+    return null;
   }, [query, products]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+
 
   const handleClose = () => {
     setQuery("");
-    setResults(null);
     onClose();
   };
 

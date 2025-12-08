@@ -84,39 +84,26 @@ export function FiltersSidebar() {
 
   // Estados para controlar os valores dos filtros
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]); 
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);  
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
-  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  
+  const selectedConditions = useMemo(() => searchParams.get('conditions')?.split(',').filter(Boolean) || [], [searchParams]);
+  const selectedBrands = useMemo(() => searchParams.get('brands')?.split(',').filter(Boolean) || [], [searchParams]);
+  const selectedSizes = useMemo(() => searchParams.get('sizes')?.split(',').filter(Boolean) || [], [searchParams]);
+  const selectedCategories = useMemo(() => searchParams.get('categories')?.split(',').filter(Boolean) || [], [searchParams]);
+  const selectedMaterials = useMemo(() => searchParams.get('materials')?.split(',').filter(Boolean) || [], [searchParams]);
+  const selectedStyles = useMemo(() => searchParams.get('styles')?.split(',').filter(Boolean) || [], [searchParams]);
+  const selectedColors = useMemo(() => searchParams.get('colors')?.split(',').filter(Boolean) || [], [searchParams]);
   
   const [brandSearch, setBrandSearch] = useState("");
 
-  // Efeito para carregar os filtros a partir da URL
+  // Efeito para carregar o preço a partir da URL
   useEffect(() => {
-    const conditionsFromUrl = searchParams.get('conditions')?.split(',') || [];
-    const brandsFromUrl = searchParams.get('brands')?.split(',') || [];
-    const sizesFromUrl = searchParams.get('sizes')?.split(',') || [];
-    const categoriesFromUrl = searchParams.get('categories')?.split(',') || [];
-    const materialsFromUrl = searchParams.get('materials')?.split(',') || [];
-    const stylesFromUrl = searchParams.get('styles')?.split(',') || [];
-    const colorsFromUrl = searchParams.get('colors')?.split(',') || [];
-    
-    setSelectedConditions(conditionsFromUrl.filter(Boolean));
-    setSelectedBrands(brandsFromUrl.filter(Boolean));
-    setSelectedSizes(sizesFromUrl.filter(Boolean));
-    setSelectedCategories(categoriesFromUrl.filter(Boolean));
-    setSelectedMaterials(materialsFromUrl.filter(Boolean));
-    setSelectedStyles(stylesFromUrl.filter(Boolean));
-    setSelectedColors(colorsFromUrl.filter(Boolean));
-
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     if (minPrice && maxPrice) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPriceRange([Number(minPrice), Number(maxPrice)]);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPriceRange([0, 1000]);
     }
   }, [searchParams]);
@@ -142,13 +129,11 @@ export function FiltersSidebar() {
     value: string, 
     checked: boolean, 
     currentValues: string[], 
-    setter: React.Dispatch<React.SetStateAction<string[]>>,
     paramName: string
   ) => {
     const newValues = checked
       ? [...currentValues, value]
       : currentValues.filter(v => v !== value);
-    setter(newValues);
     navigate(pathname + '?' + createQueryString({ [paramName]: newValues.join(',') }));
   };
 
@@ -255,11 +240,11 @@ export function FiltersSidebar() {
             <ScrollArea className="h-[300px] pr-2 -mr-2">
               <div className="space-y-1 pt-2">
                 {categories.map(cat => (
-                  <div key={cat} className="flex items-center gap-3 group/item hover:bg-secondary/30 p-2 rounded-lg transition-colors cursor-pointer" onClick={() => handleCheckboxChange(cat, !selectedCategories.includes(cat), selectedCategories, setSelectedCategories, 'categories')}>
+                  <div key={cat} className="flex items-center gap-3 group/item hover:bg-secondary/30 p-2 rounded-lg transition-colors cursor-pointer" onClick={() => handleCheckboxChange(cat, !selectedCategories.includes(cat), selectedCategories, 'categories')}>
                     <Checkbox
                       id={`category-${cat}`}
                       checked={selectedCategories.includes(cat)}
-                      onCheckedChange={(checked) => handleCheckboxChange(cat, !!checked, selectedCategories, setSelectedCategories, 'categories')}
+                      onCheckedChange={(checked) => handleCheckboxChange(cat, !!checked, selectedCategories, 'categories')}
                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary border-muted-foreground/30 rounded-md h-5 w-5"
                     />
                     <Label 
@@ -288,7 +273,7 @@ export function FiltersSidebar() {
                 <button
                   key={size}
                   type="button"
-                  onClick={() => handleCheckboxChange(size, !selectedSizes.includes(size), selectedSizes, setSelectedSizes, 'sizes')}
+                  onClick={() => handleCheckboxChange(size, !selectedSizes.includes(size), selectedSizes, 'sizes')}
                   className={`
                     h-11 min-w-[44px] px-3 rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-200 border
                     ${selectedSizes.includes(size)
@@ -319,7 +304,7 @@ export function FiltersSidebar() {
                   <button
                     key={color.name}
                     type="button"
-                    onClick={() => handleCheckboxChange(color.name, !isSelected, selectedColors, setSelectedColors, 'colors')}
+                    onClick={() => handleCheckboxChange(color.name, !isSelected, selectedColors, 'colors')}
                     className={cn(
                       "w-9 h-9 rounded-full relative transition-all duration-300 hover:scale-110 focus:outline-none shadow-sm",
                       isSelected ? "ring-2 ring-primary ring-offset-2 scale-110" : "hover:shadow-md",
@@ -362,11 +347,11 @@ export function FiltersSidebar() {
                 <div className="space-y-1">
                   {filteredBrands.length > 0 ? (
                     filteredBrands.map(brand => (
-                      <div key={brand} className="flex items-center gap-3 group/item hover:bg-secondary/30 p-2 rounded-lg transition-colors cursor-pointer" onClick={() => handleCheckboxChange(brand, !selectedBrands.includes(brand), selectedBrands, setSelectedBrands, 'brands')}>
+                      <div key={brand} className="flex items-center gap-3 group/item hover:bg-secondary/30 p-2 rounded-lg transition-colors cursor-pointer" onClick={() => handleCheckboxChange(brand, !selectedBrands.includes(brand), selectedBrands, 'brands')}>
                         <Checkbox
                           id={`brand-${brand}`}
                           checked={selectedBrands.includes(brand)}
-                          onCheckedChange={(checked) => handleCheckboxChange(brand, !!checked, selectedBrands, setSelectedBrands, 'brands')}
+                          onCheckedChange={(checked) => handleCheckboxChange(brand, !!checked, selectedBrands, 'brands')}
                           className="data-[state=checked]:bg-primary data-[state=checked]:border-primary border-muted-foreground/30 rounded-md h-5 w-5"
                         />
                         <Label 
@@ -396,11 +381,11 @@ export function FiltersSidebar() {
           <AccordionContent>
             <div className="space-y-1 pt-2">
               {conditions.map(condition => (
-                <div key={condition} className="flex items-center gap-3 group/item hover:bg-secondary/30 p-2 rounded-lg transition-colors cursor-pointer" onClick={() => handleCheckboxChange(condition, !selectedConditions.includes(condition), selectedConditions, setSelectedConditions, 'conditions')}>
+                <div key={condition} className="flex items-center gap-3 group/item hover:bg-secondary/30 p-2 rounded-lg transition-colors cursor-pointer" onClick={() => handleCheckboxChange(condition, !selectedConditions.includes(condition), selectedConditions, 'conditions')}>
                   <Checkbox
                     id={`condition-${condition}`}
                     checked={selectedConditions.includes(condition)}
-                    onCheckedChange={(checked) => handleCheckboxChange(condition, !!checked, selectedConditions, setSelectedConditions, 'conditions')}
+                    onCheckedChange={(checked) => handleCheckboxChange(condition, !!checked, selectedConditions, 'conditions')}
                     className="data-[state=checked]:bg-primary data-[state=checked]:border-primary border-muted-foreground/30 rounded-md h-5 w-5"
                   />
                   <Label 
@@ -430,7 +415,7 @@ export function FiltersSidebar() {
                   <button
                     key={material.name}
                     type="button"
-                    onClick={() => handleCheckboxChange(material.name, !isSelected, selectedMaterials, setSelectedMaterials, 'materials')}
+                    onClick={() => handleCheckboxChange(material.name, !isSelected, selectedMaterials, 'materials')}
                     className={cn(
                       "relative aspect-square rounded-2xl overflow-hidden group transition-all duration-300 border-2",
                       isSelected ? "ring-2 ring-primary ring-offset-2 border-primary scale-105" : "border-transparent hover:border-primary/30 hover:shadow-md"
@@ -476,7 +461,7 @@ export function FiltersSidebar() {
                 <button
                   key={style}
                   type="button"
-                  onClick={() => handleCheckboxChange(style, !selectedStyles.includes(style), selectedStyles, setSelectedStyles, 'styles')}
+                  onClick={() => handleCheckboxChange(style, !selectedStyles.includes(style), selectedStyles, 'styles')}
                   className={`
                     px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border
                     ${selectedStyles.includes(style)
