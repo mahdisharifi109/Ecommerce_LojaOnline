@@ -1,52 +1,56 @@
-"use client";
-
-import { UploadCloud, Tag, Ship, Video } from 'lucide-react'; // Adicionado Video icon
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Camera, MessageCircle, Package } from 'lucide-react';
 
 const steps = [
   {
-    icon: <UploadCloud className="h-8 w-8 text-primary" />,
-    title: "1. Carregue o seu Artigo",
-    description: "Tire algumas fotos, adicione uma descrição e defina o seu preço. A nossa IA pode ajudar a sugerir os detalhes!"
+    icon: Camera,
+    title: "Fotografe",
+    description: "Tire fotos claras do artigo e escreva uma descrição honesta do estado."
   },
   {
-    icon: <Video className="h-8 w-8 text-primary" />,
-    title: "2. Gere a Simulação IA",
-    description: "Use a nossa ferramenta IA para criar um vídeo que simula a embalagem e entrega, impressionando os compradores." // NOVO PASSO
+    icon: MessageCircle,
+    title: "Negocie",
+    description: "Responda às mensagens dos interessados e combine os detalhes da entrega."
   },
   {
-    icon: <Tag className="h-8 w-8 text-primary" />,
-    title: "3. Venda e Receba",
-    description: "Quando um comprador estiver interessado, receberá uma notificação. Combine os detalhes e prepare o seu artigo."
-  },
-  {
-    icon: <Ship className="h-8 w-8 text-primary" />,
-    title: "4. Envie o Produto",
-    description: "Embale o seu artigo e envie-o para o comprador. É simples, rápido e sustentável!"
+    icon: Package,
+    title: "Envie",
+    description: "Embale o artigo com cuidado e envie-o através do método combinado."
   }
 ];
 
 export function HowItWorks() {
   return (
-    <section className="bg-muted/40 py-20">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight">Vender na Rewear é Fácil</h2>
-          <p className="mt-4 text-lg text-muted-foreground">Siga estes simples passos para começar a vender.</p>
+    <section className="bg-muted/30 py-16 sm:py-20">
+      <div className="container px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+            Como funciona
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Três passos para vender os seus artigos
+          </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"> {/* Ajustar o grid para 4 colunas */}
-          {steps.map((step) => (
-            <Card key={step.title} className="text-center">
-              <CardHeader>
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  {step.icon}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <h3 className="text-xl font-semibold">{step.title}</h3>
-                <p className="mt-2 text-muted-foreground">{step.description}</p>
-              </CardContent>
-            </Card>
+        
+        <div className="mx-auto mt-12 grid max-w-4xl gap-8 sm:grid-cols-3">
+          {steps.map((step, index) => (
+            <div key={step.title} className="relative text-center">
+              {/* Linha conectora (apenas entre cards) */}
+              {index < steps.length - 1 && (
+                <div className="absolute left-1/2 top-8 hidden h-px w-full bg-border sm:block" />
+              )}
+              
+              <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <step.icon className="h-7 w-7 text-primary" />
+                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                  {index + 1}
+                </span>
+              </div>
+              
+              <h3 className="mt-5 text-lg font-semibold">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {step.description}
+              </p>
+            </div>
           ))}
         </div>
       </div>

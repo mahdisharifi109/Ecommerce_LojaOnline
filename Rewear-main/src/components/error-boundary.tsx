@@ -1,5 +1,3 @@
-'use client';
-
 import React, { Component, ReactNode } from 'react';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';

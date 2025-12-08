@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import Image from '@/components/ui/image';
 import { useForm, Controller } from "react-hook-form";

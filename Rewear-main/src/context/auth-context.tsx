@@ -1,11 +1,10 @@
 // src/context/auth-context.tsx
 
-"use client";
-
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth'; 
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, setDoc, increment } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { AppUser as UserType } from '@/lib/types'; // Importar AppUser de types.ts
 
 interface AppUser extends UserType {} // Usar a interface completa de types.ts
@@ -17,7 +16,8 @@ interface AuthContextType {
   toggleFavorite: (productId: string) => Promise<void>;
   updateUserPreferences: (preferences: { preferredBrands?: string[]; preferredSizes?: string[] }) => Promise<void>;
   addToWallet: (amount: number) => Promise<void>;
-  refetchUser: () => Promise<void>; // <-- ADICIONADO refetchUser
+  refetchUser: () => Promise<void>;
+  updateProfile: (data: Partial<AppUser>, photoFile?: File) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         name: userData.username,
+        role: userData.role || 'user',
         favorites: userData.favorites || [],
         preferredBrands: userData.preferredBrands || [],
         preferredSizes: userData.preferredSizes || [],
@@ -136,6 +137,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
 
+  const updateProfile = useCallback(async (data: Partial<AppUser>, photoFile?: File) => {
+    if (!user) return;
+    
+    try {
+      let photoURL = data.photoURL;
+
+      // Upload da foto se existir
+      if (photoFile) {
+        const storageRef = ref(storage, `users/${user.uid}/profile_${Date.now()}`);
+        const snapshot = await uploadBytes(storageRef, photoFile);
+        photoURL = await getDownloadURL(snapshot.ref);
+      }
+
+      const updates = {
+        ...data,
+        ...(photoURL && { photoURL }),
+      };
+
+      const userDocRef = doc(db, "users", user.uid);
+      await updateDoc(userDocRef, updates);
+
+      // Atualizar estado local (Optimistic UI)
+      setUser(prev => prev ? { ...prev, ...updates } : null);
+    } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
+      throw error;
+    }
+  }, [user]);
+
   const value = useMemo(() => ({
     user,
     loading,
@@ -143,8 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     toggleFavorite,
     updateUserPreferences,
     addToWallet,
-    refetchUser, // <-- ADICIONADO refetchUser ao valor do contexto
-  }), [user, loading, logout, toggleFavorite, updateUserPreferences, addToWallet, refetchUser]);
+    refetchUser,
+    updateProfile
+  }), [user, loading, logout, toggleFavorite, updateUserPreferences, addToWallet, refetchUser, updateProfile]);
 
   return (
     <AuthContext.Provider value={value}>

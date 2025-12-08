@@ -1,9 +1,45 @@
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onDocumentWritten, onDocumentCreated, onDocumentDeleted } from 'firebase-functions/v2/firestore';
 import { initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 initializeApp();
 const db = getFirestore();
+
+// --- Distributed Counters ---
+
+const updateCounter = async (field: string, change: number) => {
+    const statsRef = db.doc('stats/general');
+    await statsRef.set({ [field]: FieldValue.increment(change) }, { merge: true });
+};
+
+// Users Counter
+export const onUserCreated = onDocumentCreated('users/{userId}', (event) => {
+    return updateCounter('totalUsers', 1);
+});
+
+export const onUserDeleted = onDocumentDeleted('users/{userId}', (event) => {
+    return updateCounter('totalUsers', -1);
+});
+
+// Products Counter
+export const onProductCreated = onDocumentCreated('products/{productId}', (event) => {
+    return updateCounter('totalProducts', 1);
+});
+
+export const onProductDeleted = onDocumentDeleted('products/{productId}', (event) => {
+    return updateCounter('totalProducts', -1);
+});
+
+// Orders Counter
+export const onOrderCreated = onDocumentCreated('orders/{orderId}', (event) => {
+    return updateCounter('totalSales', 1);
+});
+
+export const onOrderDeleted = onDocumentDeleted('orders/{orderId}', (event) => {
+    return updateCounter('totalSales', -1);
+});
+
+// --- Existing Triggers ---
 
 // Dispara quando há escrita em conversations/{conversationId}/messages/{messageId}
 export const onMessageWrite = onDocumentWritten(

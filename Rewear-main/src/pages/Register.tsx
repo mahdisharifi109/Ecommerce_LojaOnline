@@ -6,9 +6,9 @@ import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight, ShieldCheck } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -42,27 +42,20 @@ export default function Register() {
     }
 
     try {
-      // 1. Criar utilizador na autenticação
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Atualizar perfil com o nome
-      await updateProfile(user, {
-        displayName: name,
-      });
+      await updateProfile(user, { displayName: name });
 
-      // 3. Criar documento do utilizador no Firestore
       await setDoc(doc(db, "users", user.uid), {
         username: name,
         email: email,
+        role: 'user',
         favorites: [],
         preferredBrands: [],
         preferredSizes: [],
         walletBalance: 0,
-        wallet: {
-          available: 0,
-          pending: 0
-        },
+        wallet: { available: 0, pending: 0 },
         createdAt: serverTimestamp(),
       });
 
@@ -84,21 +77,22 @@ export default function Register() {
   };
 
   return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-200px)] py-10">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Criar Conta</CardTitle>
-          <CardDescription className="text-center">
-            Preencha os dados abaixo para criar a sua conta
+    <div className="flex min-h-[calc(100vh-140px)] items-center justify-center px-4 py-12 bg-secondary/10">
+      <Card className="w-full max-w-md shadow-lg border-border/50">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-serif">Criar conta</CardTitle>
+          <CardDescription>
+            Junte-se à comunidade Rewear hoje
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="text-sm">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            
             <div className="space-y-2">
               <Label htmlFor="name">Nome</Label>
               <Input
@@ -108,19 +102,25 @@ export default function Register() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                autoComplete="name"
+                className="h-11"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="exemplo@email.com"
+                placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
+                className="h-11"
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="password">Palavra-passe</Label>
               <Input
@@ -129,8 +129,11 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="new-password"
+                className="h-11"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirmar Palavra-passe</Label>
               <Input
@@ -139,26 +142,46 @@ export default function Register() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                autoComplete="new-password"
+                className="h-11"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+
+            <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   A criar conta...
                 </>
               ) : (
-                "Registar"
+                <>
+                  Registar <ArrowRight className="ml-2 h-4 w-4" />
+                </>
               )}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2 text-center">
-          <div className="text-sm text-muted-foreground">
-            Já tem conta?{" "}
-            <Link to="/login" className="font-medium text-primary hover:underline">
-              Entrar
+        <CardFooter className="flex flex-col space-y-4 text-center text-sm text-muted-foreground">
+          <div className="relative w-full">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Já tem conta?
+              </span>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <Link to="/login" className="text-primary font-medium hover:underline">
+              Entrar na sua conta
             </Link>
+          </div>
+          
+          <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground/60 pt-2">
+            <ShieldCheck className="h-3 w-3" />
+            <span>Os seus dados estão protegidos</span>
           </div>
         </CardFooter>
       </Card>

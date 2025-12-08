@@ -1,7 +1,6 @@
-"use client";
 import { useEffect, useState, useRef } from 'react';
 import { getProductsWithPagination } from '@/lib/productService';
-import ProductCard from './product-card';
+import { ProductCard } from './product-card';
 
 export default function Products() {
   const [products, setProducts] = useState<any[]>([]);
@@ -52,7 +51,7 @@ export default function Products() {
     <section>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
         {products.map((p, i) => (
-          <ProductCard key={p.id} product={p} index={i} />
+          <ProductCard key={p.id} product={p} />
         ))}
       </div>
       {hasMore && (

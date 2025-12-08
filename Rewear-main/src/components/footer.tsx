@@ -1,52 +1,109 @@
 import { Link } from "react-router-dom";
-import { Recycle } from "lucide-react"; // <-- IMPORTAR Recycle
+
+const footerLinks = {
+  explorar: [
+    { label: "Catálogo", href: "/catalog" },
+    { label: "Roupa", href: "/catalog?category=Roupa" },
+    { label: "Calçado", href: "/catalog?category=Calçado" },
+    { label: "Acessórios", href: "/catalog?category=Acessórios" },
+  ],
+  vender: [
+    { label: "Publicar anúncio", href: "/sell" },
+    { label: "Painel de vendedor", href: "/dashboard" },
+  ],
+  informacao: [
+    { label: "Sobre", href: "/about" },
+    { label: "FAQ", href: "/faq" },
+    { label: "Privacidade", href: "/privacy" },
+    { label: "Termos", href: "/terms" },
+  ],
+};
 
 export function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="border-t bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <Recycle className="h-6 w-6 text-primary" /> {/* <-- NOVO ÍCONE */}
-              <span className="font-bold text-lg">Rewear</span>
+    <footer className="border-t border-border/40 bg-background pt-16 pb-8">
+      <div className="container mx-auto px-4 md:px-8">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-12 mb-16">
+          {/* Brand */}
+          <div className="lg:col-span-4 space-y-6">
+            <Link to="/" className="inline-block">
+              <span className="font-heading text-3xl font-medium tracking-tight text-foreground">Rewear.</span>
             </Link>
-            <p className="text-muted-foreground text-sm">
-              O seu mercado online para artigos em segunda mão.
+            <p className="max-w-sm text-base leading-relaxed text-muted-foreground font-body">
+              Curadoria de moda circular para quem acredita que o estilo não precisa custar o planeta. 
+              Cada peça conta uma história.
             </p>
           </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Comprar</h3>
-            <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/" className="text-muted-foreground hover:text-foreground">Todos os Produtos</Link></li>
-              <li><Link to="/?category=Roupa" className="text-muted-foreground hover:text-foreground">Roupa</Link></li>
-              <li><Link to="/?category=Calçado" className="text-muted-foreground hover:text-foreground">Calçado</Link></li>
-              <li><Link to="/?category=Livros" className="text-muted-foreground hover:text-foreground">Livros</Link></li>
-              <li><Link to="/?category=Eletrónica" className="text-muted-foreground hover:text-foreground">Eletrónica</Link></li>
-              <li><Link to="/?category=Acessórios" className="text-muted-foreground hover:text-foreground">Acessórios</Link></li>
-              <li><Link to="/?category=Desporto" className="text-muted-foreground hover:text-foreground">Desporto</Link></li>
-              <li><Link to="/?category=Casa" className="text-muted-foreground hover:text-foreground">Casa</Link></li>
-              <li><Link to="/?category=Outro" className="text-muted-foreground hover:text-foreground">Outro</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Vender</h3>
-            <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/sell" className="text-muted-foreground hover:text-foreground">Como vender</Link></li>
-              <li><Link to="/sell" className="text-muted-foreground hover:text-foreground">Começar a vender</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Ajuda</h3>
-            <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/about" className="text-muted-foreground hover:text-foreground">Sobre Nós</Link></li>
-              <li><Link to="/contact" className="text-muted-foreground hover:text-foreground">Contacto</Link></li>
-              <li><Link to="/faq" className="text-muted-foreground hover:text-foreground">FAQ</Link></li>
-            </ul>
+
+          {/* Links Grid */}
+          <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-8">
+            {/* Explorar */}
+            <div>
+              <h3 className="font-heading text-lg font-medium text-foreground mb-6">
+                Coleções
+              </h3>
+              <ul className="space-y-4">
+                {footerLinks.explorar.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      to={link.href}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 font-body"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Vender */}
+            <div>
+              <h3 className="font-heading text-lg font-medium text-foreground mb-6">
+                Circular
+              </h3>
+              <ul className="space-y-4">
+                {footerLinks.vender.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      to={link.href}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 font-body"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Informação */}
+            <div>
+              <h3 className="font-heading text-lg font-medium text-foreground mb-6">
+                Consciência
+              </h3>
+              <ul className="space-y-4">
+                {footerLinks.informacao.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      to={link.href}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 font-body"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
-        <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Rewear. Todos os direitos reservados.</p>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground font-body uppercase tracking-wider">
+          <p>&copy; {currentYear} Rewear. Todos os direitos reservados.</p>
+          <p className="flex items-center gap-2">
+            Feito com amor e consciência <span className="text-primary">🌿</span>
+          </p>
         </div>
       </div>
     </footer>

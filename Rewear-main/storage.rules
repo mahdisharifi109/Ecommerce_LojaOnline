@@ -38,15 +38,16 @@ service firebase.storage {
     }
     
     // === IMAGENS DE PRODUTOS ===
-    // Organizadas por utilizador: /products/{userId}/{productId}/{imageName}
+    // Organizadas por utilizador: /products/{userId}/{imageName}
     
     // Leitura pública (marketplace aberto)
     match /products/{allPaths=**} {
-      allow read: if true;  // Qualquer pessoa pode ver produtos
+      allow read: if true;
     }
 
     // Upload de imagens de produtos
-    match /products/{userId}/{productId}/{imageName} {
+    // Caminho usado no código: products/{userId}/{filename}
+    match /products/{userId}/{imageName} {
       // Upload: apenas o dono + validações rigorosas
       allow write: if isOwner(userId)
                    && isValidImageType()
@@ -55,13 +56,19 @@ service firebase.storage {
       // Apagar: apenas o dono
       allow delete: if isOwner(userId);
     }
+
+    // Regra antiga (mantida por compatibilidade se houver dados antigos)
+    match /products/{userId}/{productId}/{imageName} {
+      allow write: if isOwner(userId) && isValidImageType() && isValidProductSize();
+      allow delete: if isOwner(userId);
+    }
     
     // === IMAGENS DE PERFIL ===
-    // Organizadas por utilizador: /users/{userId}/profile/{imageName}
+    // Organizadas por utilizador: /users/{userId}/profile_{timestamp}
     
     // Leitura pública (para exibir perfis)
-    match /users/{userId}/profile/{imageName} {
-      allow read: if true;  // Perfis são públicos
+    match /users/{userId}/{imageName} {
+      allow read: if true;
       
       // Upload: apenas o próprio utilizador
       allow write: if isOwner(userId)

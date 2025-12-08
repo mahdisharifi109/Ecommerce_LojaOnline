@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import Image from '@/components/ui/image';
 import { useForm, Controller } from "react-hook-form";
@@ -127,90 +125,126 @@ export function SellForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Venda o seu artigo</CardTitle>
-        <CardDescription>Preencha os detalhes abaixo. Campos com * são opcionais.</CardDescription>
-      </CardHeader>
-      <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="image-upload">Imagens do Produto</Label>
-               <div className="relative flex justify-center items-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors">
-                  <Input id="image-upload" type="file" multiple className="absolute w-full h-full opacity-0 cursor-pointer" onChange={handleImageChange} accept="image/*" />
-                  <div className="text-center text-muted-foreground">
-                      <UploadCloud className="mx-auto h-8 w-8" />
-                      <p className="mt-1 text-sm">Arraste e solte ou clique para carregar</p>
+    <div className="max-w-3xl mx-auto px-6 pt-32 pb-24">
+      <div className="text-center mb-16">
+        <h1 className="font-serif text-5xl mb-4 text-primary">Novo Anúncio</h1>
+        <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+          Dê uma nova vida às suas peças. Preencha os detalhes abaixo para encontrar o próximo dono perfeito.
+        </p>
+      </div>
+      
+      <Card className="border-none shadow-xl shadow-black/5 bg-white/50 backdrop-blur-sm">
+        <CardContent className="p-8 md:p-12">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
+            
+            {/* Section: Images */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="image-upload" className="text-xl font-serif font-medium">Fotografias</Label>
+                <span className="text-sm text-muted-foreground">Adicione até 5 fotos</span>
+              </div>
+              
+               <div className="relative flex flex-col justify-center items-center w-full h-80 border-2 border-dashed border-muted-foreground/20 rounded-2xl cursor-pointer hover:bg-secondary/30 hover:border-primary/50 transition-all duration-300 group bg-secondary/10">
+                  <Input id="image-upload" type="file" multiple className="absolute w-full h-full opacity-0 cursor-pointer z-10" onChange={handleImageChange} accept="image/*" />
+                  <div className="text-center text-muted-foreground group-hover:text-primary transition-colors p-6">
+                      <div className="bg-background rounded-full p-4 inline-flex mb-4 shadow-sm group-hover:shadow-md transition-all">
+                        <UploadCloud className="h-8 w-8" />
+                      </div>
+                      <p className="text-lg font-medium mb-2">Arraste e solte suas fotos aqui</p>
+                      <p className="text-sm opacity-70 max-w-xs mx-auto">Formatos suportados: JPG, PNG. Máximo 5MB por foto.</p>
                   </div>
               </div>
+
               {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   {imagePreviews.map((image, index) => (
-                    <div key={index} className="relative group aspect-square">
+                    <div key={index} className="relative group aspect-[3/4] rounded-xl overflow-hidden shadow-sm">
                        <Image 
                          src={typeof image === 'string' ? image : URL.createObjectURL(image as File)} 
                          alt={`Pré-visualização ${index + 1}`} 
                          fill 
                          loading="lazy"
                          sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
-                         className="rounded-md object-cover" 
+                         className="object-cover transition-transform duration-500 group-hover:scale-110" 
                        />
-                       <button type="button" onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                       <button type="button" onClick={() => removeImage(index)} className="absolute top-2 right-2 bg-white/90 text-destructive rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:scale-110 shadow-sm">
                           <X className="h-4 w-4" />
                        </button>
                     </div>
                   ))}
                 </div>
               )}
-              {errors.images && <p className="text-sm text-destructive">{errors.images.message?.toString()}</p>}
+              {errors.images && <p className="text-sm font-medium text-destructive flex items-center gap-2"><X className="h-4 w-4"/> {errors.images.message?.toString()}</p>}
             </div>
 
-            <div className="space-y-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="title">Título</Label>
-                    <Controller name="title" control={control} render={({ field }) => <Input id="title" placeholder="Ex: Casaco de Lã Vintage" {...field} />} />
+            <div className="h-px bg-border/50" />
+
+            {/* Section: Basic Info */}
+            <div className="space-y-8">
+                 <div className="space-y-4">
+                    <Label htmlFor="title" className="text-base font-medium text-foreground/80">O que está a vender?</Label>
+                    <Controller name="title" control={control} render={({ field }) => (
+                      <Input 
+                        id="title" 
+                        className="h-14 px-4 rounded-xl bg-secondary/20 border-transparent focus:bg-background focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all text-lg placeholder:text-muted-foreground/50" 
+                        placeholder="Ex: Casaco de Lã Vintage Bege" 
+                        {...field} 
+                      />
+                    )} />
                     {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
                  </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="description">Descrição</Label>
-                    <Controller name="description" control={control} render={({ field }) => <Textarea id="description" placeholder="Descreva o seu artigo em detalhe..." rows={5} {...field} />} />
+
+                 <div className="space-y-4">
+                    <Label htmlFor="description" className="text-base font-medium text-foreground/80">Descrição detalhada</Label>
+                    <Controller name="description" control={control} render={({ field }) => (
+                      <Textarea 
+                        id="description" 
+                        className="min-h-[160px] p-4 rounded-xl bg-secondary/20 border-transparent focus:bg-background focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all resize-y text-base placeholder:text-muted-foreground/50 leading-relaxed" 
+                        placeholder="Conte a história desta peça. Mencione o estado, medidas exatas, material e qualquer defeito visível..." 
+                        {...field} 
+                      />
+                    )} />
                     {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
                  </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="price">Preço (€)</Label>
-                        <Controller name="price" control={control} render={({ field }) => <Input id="price" type="number" step="0.01" placeholder="25.00" {...field} value={field.value ?? ''} />} />
-                        {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="quantity">Quantidade</Label>
-                        <Controller name="quantity" control={control} render={({ field }) => <Input id="quantity" type="number" step="1" placeholder="1" {...field} value={field.value ?? ''} />} />
-                        {errors.quantity && <p className="text-sm text-destructive">{errors.quantity.message}</p>}
-                    </div>
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="brand">Marca*</Label>
-                        <Controller name="brand" control={control} render={({ field }) => <SelectOrInput id="brand" options={PREDEFINED_BRANDS} placeholder="Selecione ou escreva uma marca" {...field} />} />
+            </div>
+
+            <div className="h-px bg-border/50" />
+
+            {/* Section: Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <Label htmlFor="brand" className="text-base font-medium text-foreground/80">Marca</Label>
+                        <Controller name="brand" control={control} render={({ field }) => <SelectOrInput id="brand" options={PREDEFINED_BRANDS} placeholder="Selecione ou digite" {...field} />} />
                         {errors.brand && <p className="text-sm text-destructive">{errors.brand.message}</p>}
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="material">Material*</Label>
-                        <Controller name="material" control={control} render={({ field }) => <SelectOrInput id="material" options={PREDEFINED_MATERIALS} placeholder="Selecione ou escreva um material" {...field} />} />
+                    <div className="space-y-4">
+                        <Label htmlFor="material" className="text-base font-medium text-foreground/80">Material Principal</Label>
+                        <Controller name="material" control={control} render={({ field }) => <SelectOrInput id="material" options={PREDEFINED_MATERIALS} placeholder="Selecione ou digite" {...field} />} />
                         {errors.material && <p className="text-sm text-destructive">{errors.material.message}</p>}
                     </div>
-                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="sizes">Tamanhos* (separados por vírgula)</Label>
-                    <Controller name="sizes" control={control} render={({ field }) => <Input id="sizes" placeholder="S, M, L, XL" {...field} value={field.value ?? ''} />} />
-                    {errors.sizes && <p className="text-sm text-destructive">{errors.sizes.message}</p>}
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label>Categoria</Label>
+                    <div className="space-y-4">
+                        <Label htmlFor="sizes" className="text-base font-medium text-foreground/80">Tamanho</Label>
+                        <Controller name="sizes" control={control} render={({ field }) => (
+                          <Input 
+                            id="sizes" 
+                            className="h-12 rounded-xl bg-secondary/20 border-transparent focus:bg-background focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all" 
+                            placeholder="Ex: M, 38, 40" 
+                            {...field} 
+                            value={field.value ?? ''} 
+                          />
+                        )} />
+                        {errors.sizes && <p className="text-sm text-destructive">{errors.sizes.message}</p>}
+                    </div>
+                </div>
+
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <Label className="text-base font-medium text-foreground/80">Categoria</Label>
                          <Controller name="category" control={control} render={({ field }) => (
                             <Select onValueChange={field.onChange} value={field.value}>
-                                <SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+                                <SelectTrigger className="h-12 rounded-xl bg-secondary/20 border-transparent focus:bg-background focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all"><SelectValue placeholder="Selecione" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Roupa">Roupa</SelectItem>
                                     <SelectItem value="Calçado">Calçado</SelectItem>
@@ -227,28 +261,70 @@ export function SellForm() {
                          )}/>
                         {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
                     </div>
-                    <div className="space-y-2">
-                        <Label>Condição</Label>
+                    <div className="space-y-4">
+                        <Label className="text-base font-medium text-foreground/80">Condição</Label>
                          <Controller name="condition" control={control} render={({ field }) => (
                             <Select onValueChange={field.onChange} value={field.value}>
-                                <SelectTrigger><SelectValue placeholder="Selecione a condição" /></SelectTrigger>
+                                <SelectTrigger className="h-12 rounded-xl bg-secondary/20 border-transparent focus:bg-background focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all"><SelectValue placeholder="Selecione" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Novo">Novo</SelectItem>
-                                    <SelectItem value="Muito bom">Muito bom</SelectItem>
-                                    <SelectItem value="Bom">Bom</SelectItem>
+                                    <SelectItem value="Novo">Novo com etiqueta</SelectItem>
+                                    <SelectItem value="Muito bom">Excelente estado</SelectItem>
+                                    <SelectItem value="Bom">Bom estado</SelectItem>
                                 </SelectContent>
                             </Select>
                          )}/>
                         {errors.condition && <p className="text-sm text-destructive">{errors.condition.message}</p>}
                     </div>
-                 </div>
-                 <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || authLoading}>
-                    {(isSubmitting || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                     <div className="space-y-4">
+                        <Label htmlFor="quantity" className="text-base font-medium text-foreground/80">Quantidade</Label>
+                        <Controller name="quantity" control={control} render={({ field }) => (
+                          <Input 
+                            id="quantity" 
+                            type="number" 
+                            step="1" 
+                            className="h-12 rounded-xl bg-secondary/20 border-transparent focus:bg-background focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all" 
+                            placeholder="1" 
+                            {...field} 
+                            value={field.value ?? ''} 
+                          />
+                        )} />
+                        {errors.quantity && <p className="text-sm text-destructive">{errors.quantity.message}</p>}
+                    </div>
+                </div>
+            </div>
+
+            <div className="h-px bg-border/50" />
+
+            {/* Section: Price */}
+            <div className="space-y-6">
+                <Label htmlFor="price" className="text-xl font-serif font-medium">Defina o preço</Label>
+                <div className="relative max-w-xs">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium text-lg">€</span>
+                    <Controller name="price" control={control} render={({ field }) => (
+                      <Input 
+                        id="price" 
+                        type="number" 
+                        step="0.01" 
+                        className="h-16 pl-10 text-2xl font-medium rounded-xl bg-secondary/20 border-transparent focus:bg-background focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all placeholder:text-muted-foreground/30" 
+                        placeholder="0.00" 
+                        {...field} 
+                        value={field.value ?? ''} 
+                      />
+                    )} />
+                </div>
+                {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
+                <p className="text-sm text-muted-foreground">O preço inclui taxas de proteção ao vendedor.</p>
+            </div>
+
+            <div className="pt-8">
+                 <Button type="submit" className="w-full h-14 text-lg font-medium rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]" size="lg" disabled={isSubmitting || authLoading}>
+                    {(isSubmitting || authLoading) && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                     Publicar Anúncio
                  </Button>
             </div>
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 }

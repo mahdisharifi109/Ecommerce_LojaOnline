@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import ProductCard from "@/components/product-card";
+import { ProductCard } from "@/components/product-card";
 import { useProducts } from "@/context/product-context";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
@@ -107,6 +107,8 @@ export function ProductGrid({ personalized = false }: ProductGridProps) {
     const colors = searchParams.get("colors")?.split(',').filter(Boolean) || [];
     const locations = searchParams.get("locations")?.split(',').filter(Boolean) || [];
     const categories = searchParams.get("categories")?.split(',').filter(Boolean) || [];
+    const materials = searchParams.get("materials")?.split(',').filter(Boolean) || [];
+    const styles = searchParams.get("styles")?.split(',').filter(Boolean) || [];
     const minPriceStr = searchParams.get("minPrice");
     const maxPriceStr = searchParams.get("maxPrice");
     const minPrice = minPriceStr ? Number(minPriceStr) : undefined;
@@ -141,6 +143,16 @@ export function ProductGrid({ personalized = false }: ProductGridProps) {
     // Filtro de categorias
     if (categories.length > 0) {
       filtered = filtered.filter(p => categories.includes(p.category));
+    }
+
+    // Filtro de materiais
+    if (materials.length > 0) {
+      filtered = filtered.filter(p => p.material && materials.includes(p.material));
+    }
+
+    // Filtro de estilos
+    if (styles.length > 0) {
+      filtered = filtered.filter(p => p.style && styles.includes(p.style));
     }
 
     // Filtro de cores (se disponível no produto)
@@ -194,17 +206,17 @@ export function ProductGrid({ personalized = false }: ProductGridProps) {
       </div>
 
       {initialLoading ? (
-        <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       ) : filteredProducts.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredProducts.map((product, index) => {
               if (filteredProducts.length === index + 1 && showLoadMore) {
-                return <div ref={lastProductElementRef} key={product.id}><ProductCard product={product} index={index} /></div>
+                return <div ref={lastProductElementRef} key={product.id}><ProductCard product={product} /></div>
               }
-              return <ProductCard key={product.id} product={product} index={index} />
+              return <ProductCard key={product.id} product={product} />
             })}
           </div>
           {isLoadingMore && (

@@ -1,13 +1,27 @@
 import { SellForm } from "@/components/sell-form";
+import { useAuth } from "@/context/auth-context";
+import { Navigate, useLocation } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 export default function Sell() {
-  return (
-    <div className="container max-w-3xl py-10">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold">Vender Artigo</h1>
-        <p className="text-muted-foreground mt-2">Preencha os detalhes do seu artigo para o colocar à venda.</p>
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="container flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to={`/login?redirect=${location.pathname}`} replace />;
+  }
+
+  return (
+    <>
       <SellForm />
-    </div>
+    </>
   );
 }

@@ -1,404 +1,315 @@
 import React, { useState, Suspense, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Recycle, ShoppingCart, ChevronDown, User, Menu, Bell, Heart, Search, Sun, Moon, MessageSquare } from "lucide-react"; 
+import { ShoppingBag, User, Menu, Search, X, Heart, Bell, MessageCircle, Tag, Info, CheckCircle2, ShieldAlert } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useCart } from "@/context/cart-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
+import { useCart } from "@/context/cart-context";
 import { useAuth } from "@/context/auth-context";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { SearchBar } from "./search-bar";
-import { Skeleton } from "./ui/skeleton";
-
+import { Logo } from "@/components/logo";
+import { AnimatePresence, motion } from "framer-motion";
+import { SearchOverlay } from "@/components/search-overlay";
+import { useNotifications } from '@/hooks/use-notifications';
+import { formatDistanceToNow } from 'date-fns';
+import { pt } from 'date-fns/locale';
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { collection, query, where, onSnapshot, orderBy, doc, updateDoc, writeBatch } from "firebase/firestore";
-import type { Notification } from "@/lib/types";
 
-// Dynamic Import para o SideCart (Otimização de Performance)
 const DynamicSideCart = React.lazy(() => import("./side-cart"));
 
-
-const categories = ["Roupa", "Calçado", "Livros", "Eletrónica", "Acessórios", "Desporto", "Casa", "Outro"]; 
-
-// Hook simples para alternar o tema (implementação no cliente)
-const useTheme = () => {
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
-    
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const root = window.document.documentElement;
-        const currentTheme = root.classList.contains('dark') ? 'dark' : 'light';
-        setTheme(currentTheme);
-    }, []);
-    
-    const toggleTheme = () => {
-        if (typeof window === 'undefined') return;
-        const root = window.document.documentElement;
-        const isDark = root.classList.contains('dark');
-        const newTheme = isDark ? 'light' : 'dark';
-        
-        if (isDark) {
-            root.classList.remove('dark');
-        } else {
-            root.classList.add('dark');
-        }
-        setTheme(newTheme);
-    };
-    
-    return { theme, toggleTheme };
-}
-
-
-function SearchBarFallback() {
-  return <Skeleton className="hidden h-10 w-full max-w-xs md:block" />;
-}
-
-function NotificationBell() {
-    const { user } = useAuth();
-    const navigate = useNavigate();
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
-
-    useEffect(() => {
-        if (!user) {
-            setNotifications([]);
-            setUnreadCount(0);
-            return;
-        }
-
-        const notificationsQuery = query(
-            collection(db, "notifications"),
-            where("userId", "==", user.uid),
-            orderBy("createdAt", "desc")
-        );
-
-        const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
-            const userNotifications = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Notification[];
-            
-            setNotifications(userNotifications);
-            const newUnreadCount = userNotifications.filter(n => !n.read).length;
-            setUnreadCount(newUnreadCount);
-        });
-
-        return () => unsubscribe();
-    }, [user]);
-
-    const handleMarkAllAsRead = async () => {
-        if (!user || unreadCount === 0) return;
-        const batch = writeBatch(db);
-        notifications.forEach(notification => {
-            if (!notification.read) {
-                const notifRef = doc(db, "notifications", notification.id);
-                batch.update(notifRef, { read: true });
-            }
-        });
-        await batch.commit();
-    };
-
-    const handleNotificationClick = async (notification: Notification) => {
-        if (!notification.read) {
-            await updateDoc(doc(db, "notifications", notification.id), { read: true });
-        }
-        navigate(notification.link);
-    }
-    
-    return (
-        <DropdownMenu onOpenChange={(open) => { if(open) handleMarkAllAsRead() }}>
-            <DropdownMenuTrigger asChild>
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="relative"
-                    aria-label={`Notificações${unreadCount > 0 ? ` (${unreadCount} não lidas)` : ''}`}
-                >
-                    <Bell className="h-5 w-5" />
-                    {unreadCount > 0 && (
-                        <Badge 
-                            variant="destructive" 
-                            className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full p-1 text-xs"
-                            aria-hidden="true"
-                        >
-                            {unreadCount}
-                        </Badge>
-                    )}
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notificações</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {notifications.length > 0 ? (
-                    notifications.slice(0, 5).map(notification => (
-                        <DropdownMenuItem key={notification.id} onSelect={() => handleNotificationClick(notification)} className={cn("cursor-pointer whitespace-normal", !notification.read && "bg-accent")}>
-                           <div className="flex items-start gap-2">
-                             {!notification.read && <div className="h-2 w-2 rounded-full bg-primary mt-1.5" />}
-                             <p className="flex-1">{notification.message}</p>
-                           </div>
-                        </DropdownMenuItem>
-                    ))
-                ) : (
-                    <p className="p-2 text-sm text-muted-foreground">Não tem notificações.</p>
-                )}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    )
-}
+const menuItems = [
+  { name: "Novidades", href: "/catalog?sort=newest", image: "https://images.unsplash.com/photo-1532453288672-3a27e9be9efd?q=80&w=1000&auto=format&fit=crop" },
+  { name: "Roupa", href: "/catalog?category=Roupa", image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1000&auto=format&fit=crop" },
+  { name: "Calçado", href: "/catalog?category=Calçado", image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=1000&auto=format&fit=crop" },
+  { name: "Acessórios", href: "/catalog?category=Acessórios", image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=800&auto=format&fit=crop" },
+  { name: "Vender", href: "/sell", image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=1000&auto=format&fit=crop" },
+];
 
 export function Header() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const pathname = location.pathname;
-  const { cartCount } = useCart();
   const { user, logout } = useAuth();
-  const { toast } = useToast();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { cartItems } = useCart();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [isCartAnimating, setIsCartAnimating] = useState(false);
-  const { theme, toggleTheme } = useTheme(); 
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const location = useLocation();
 
+  // Handle scroll effect
   useEffect(() => {
-    setIsMounted(true);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Check admin status
   useEffect(() => {
-    if (cartCount > 0 && isMounted) {
-      setIsCartAnimating(true);
-      const timer = setTimeout(() => setIsCartAnimating(false), 500);
-      return () => clearTimeout(timer);
+    async function checkAdmin() {
+      if (user) {
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().role === 'admin') {
+            setIsAdmin(true);
+          }
+        } catch (e) {
+          console.error("Error checking admin", e);
+        }
+      } else {
+        setIsAdmin(false);
+      }
     }
-  }, [cartCount, isMounted]);
+    checkAdmin();
+  }, [user]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  }
+  // Close menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location]);
 
-  const handleSellClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!user) {
-      e.preventDefault();
-      toast({
-        variant: "destructive",
-        title: "Acesso Negado",
-        description: "Precisa de iniciar sessão para vender um artigo.",
-      });
-      navigate('/login?redirect=/sell');
-    }
-  }
-  
-  const NavLink = ({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void }) => {
-    const isActive = pathname === to;
-    return (
-      <Link 
-        to={to} 
-        className={cn("transition-colors hover:text-foreground", isActive ? "text-foreground" : "text-foreground/60")}
-        onClick={onClick}
-      >
-        {children}
-      </Link>
-    );
-  };
-  
-  const MobileNavLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
-    <Link to={to} className="block py-2 text-lg" onClick={() => setIsMobileMenuOpen(false)}>
-      {children}
-    </Link>
-  );
+  const itemCount = cartItems.reduce((acc: number, item: any) => acc + item.quantity, 0);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* ESTA LINHA GARANTE QUE O HEADER ALINHA PERFEITAMENTE COM O CONTEÚDO */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between gap-4"> 
-        
-        {/* --- GRUPO ESQUERDO: LOGO E LINKS PRINCIPAIS --- */}
-        <div className="flex items-center gap-6"> 
-            <Link to="/" className="flex items-center gap-2">
-                <Recycle className="h-6 w-6 text-primary" /> 
-                <span className="font-bold text-lg">Rewear</span>
-            </Link>
-
-            {/* NAVEGAÇÃO PARA DESKTOP (Catálogo e Vender) */}
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-1 focus:outline-none transition-colors text-foreground/60 hover:text-foreground">
-                    Catálogo
-                    <ChevronDown className="h-4 w-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                    <DropdownMenuItem asChild><Link to="/catalog">Todos os Artigos</Link></DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {categories.map((category) => (
-                        <DropdownMenuItem key={category} asChild><Link to={`/catalog?category=${category}`}>{category}</Link></DropdownMenuItem>
-                    ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <NavLink to="/sell" onClick={handleSellClick}>Vender</NavLink>
-            </nav>
-        </div>
-
-        {/* --- GRUPO DIREITO: PESQUISA, AÇÕES E MENU --- */}
-        <div className="flex items-center gap-4 ml-auto"> 
-          
-          {/* 1. Pesquisa e Tema (Desktop) */}
-          <div className="hidden md:flex items-center gap-2">
-              <Suspense fallback={<SearchBarFallback />}>
-                  <SearchBar />
-              </Suspense>
-
-              {/* Botão de Tema */}
-              <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={toggleTheme}
-                  aria-label={`Alternar para modo ${theme === 'light' ? 'escuro' : 'claro'}`}
-              >
-                  {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                  <span className="sr-only">Alternar tema</span>
-              </Button>
+    <>
+      <header 
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out",
+          scrolled ? "bg-background/80 backdrop-blur-md py-3 border-b border-border/50" : "bg-transparent py-6"
+        )}
+      >
+        <div className="container mx-auto px-4 md:px-8 flex items-center justify-between">
+          {/* Left: Menu Trigger */}
+          <div className="flex items-center gap-6 w-1/3">
+            <button 
+              onClick={() => setIsMenuOpen(true)}
+              className="group flex items-center justify-center text-foreground hover:text-primary transition-colors p-1"
+              aria-label="Menu"
+            >
+              <Menu className="h-6 w-6 stroke-[1.5]" />
+            </button>
+            <button 
+              onClick={() => setIsSearchOpen(true)}
+              className="md:hidden text-foreground hover:text-primary transition-colors p-1"
+            >
+               <Search className="h-6 w-6 stroke-[1.5]" />
+            </button>
           </div>
-          
-          {/* 2. ÍCONES DE AÇÃO (Login/User) */}
-          {!isMounted ? <Skeleton className="h-10 w-10 md:w-auto" /> : user ? (
-              <div className="flex items-center gap-1.5"> 
-                  {/* Ícones de Ação Logados (Desktop) */}
-                  <div className="hidden md:flex items-center gap-1.5"> 
-                      <Button variant="ghost" size="icon" asChild>
-                          <Link to="/favorites" aria-label="Ver favoritos">
-                              <Heart className="h-4 w-4" />
-                              <span className="sr-only">Favoritos</span>
-                          </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" asChild>
-                          <Link to="/inbox" aria-label="Ver mensagens">
-                              <MessageSquare className="h-4 w-4" />
-                              <span className="sr-only">Mensagens</span>
-                          </Link>
-                      </Button>
-                      <NotificationBell />
-                  </div>
 
-                  {/* Dropdown de Perfil (User Icon) */}
-                  <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                              <User className="h-4 w-4" />
-                          </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild><Link to="/profile">Perfil</Link></DropdownMenuItem>
-                          <DropdownMenuItem asChild><Link to="/dashboard">Dashboard</Link></DropdownMenuItem>
-                          <DropdownMenuItem asChild><Link to="/wallet">Carteira</Link></DropdownMenuItem>
-                          <DropdownMenuItem asChild><Link to="/favorites">Favoritos</Link></DropdownMenuItem>
-                          <DropdownMenuItem asChild><Link to="/inbox" className="flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Mensagens</Link></DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild><Link to="/about">Sobre</Link></DropdownMenuItem>
-                          <DropdownMenuItem asChild><Link to="/faq">FAQ</Link></DropdownMenuItem>
-                          <DropdownMenuItem asChild><Link to="/contact">Contacto</Link></DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild><Link to="/settings">Definições</Link></DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleLogout}>Terminar Sessão</DropdownMenuItem>
-                      </DropdownMenuContent>
-                  </DropdownMenu>
-              </div>
-          ) : (
-              // Botões Login/Registar (Desktop)
-              <div className="hidden md:flex items-center gap-2">
-                  <Button variant="ghost" asChild><Link to="/login">Iniciar Sessão</Link></Button>
-                  <Button asChild><Link to="/register">Registar</Link></Button>
-              </div>
-          )}
+          {/* Center: Logo */}
+          <div className="w-1/3 flex justify-center items-center">
+            <Link to="/" className="relative z-50 flex items-center">
+              <Logo className="h-8 md:h-10 w-auto" />
+            </Link>
+          </div>
 
-          {/* 3. Carrinho */}
-                    <Button variant="ghost" size="icon" className={cn("relative", isCartAnimating && "animate-bounce")} onClick={() => setIsCartOpen(true)}>
-                        <ShoppingCart className="h-4 w-4" />
-            {isMounted && cartCount > 0 && (
-              <Badge variant="default" className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-1 text-xs">{cartCount}</Badge>
-            )}
-            <span className="sr-only">Abrir carrinho</span>
-          </Button>
+          {/* Right: Actions */}
+          <div className="flex items-center justify-end gap-6 w-1/3">
+            <div className="hidden md:flex items-center gap-6">
+               <button 
+                 onClick={() => setIsSearchOpen(true)}
+                 className="text-foreground hover:text-primary transition-colors p-1"
+               >
+                 <Search className="h-6 w-6 stroke-[1.5]" />
+               </button>
+               {user ? (
+                 <>
+                   <Link to="/messages" className="text-foreground hover:text-primary transition-colors relative p-1" aria-label="Mensagens">
+                     <MessageCircle className="h-6 w-6 stroke-[1.5]" />
+                     <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+                   </Link>
 
-          {isMounted && (
-            <Suspense fallback={null}>
-              <DynamicSideCart open={isCartOpen} onOpenChange={setIsCartOpen} />
-            </Suspense>
-          )}
-          
-          {/* 4. Menu Hamburger (Mobile) */}
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild><Button variant="ghost" size="icon" className="md:hidden"><Menu className="h-6 w-6" /><span className="sr-only">Abrir menu</span></Button></SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                 <nav className="flex flex-col gap-4 mt-8">
-                    <Suspense fallback={<SearchBarFallback />}>
-                      <SearchBar />
-                    </Suspense>
-                    <Separator />
+                   <DropdownMenu>
+                     <DropdownMenuTrigger asChild>
+                       <button className="text-foreground hover:text-primary transition-colors relative outline-none p-1" aria-label="Notificações">
+                         <Bell className="h-6 w-6 stroke-[1.5]" />
+                         {unreadCount > 0 && (
+                           <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
+                         )}
+                       </button>
+                     </DropdownMenuTrigger>
+                     <DropdownMenuContent align="end" className="w-80 p-0 rounded-xl shadow-xl border-border/40 bg-background/95 backdrop-blur-sm">
+                       <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+                         <span className="font-medium text-sm">Notificações</span>
+                         {unreadCount > 0 && (
+                           <span 
+                             className="text-xs text-muted-foreground cursor-pointer hover:text-primary"
+                             onClick={() => markAllAsRead()}
+                           >
+                             Marcar todas como lidas
+                           </span>
+                         )}
+                       </div>
+                       <div className="max-h-[300px] overflow-y-auto py-1">
+                         {notifications.length === 0 ? (
+                           <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                             Nenhuma notificação recente
+                           </div>
+                         ) : (
+                           notifications.map((notification) => (
+                             <DropdownMenuItem 
+                               key={notification.id} 
+                               className="px-4 py-3 cursor-pointer hover:bg-secondary/30 focus:bg-secondary/30 gap-3 items-start"
+                               onClick={() => markAsRead(notification.id)}
+                             >
+                               {notification.type === 'offer' && (
+                                 <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 text-emerald-600 mt-0.5">
+                                   <Tag className="h-4 w-4" />
+                                 </div>
+                               )}
+                               {(notification.type === 'system' || notification.type === 'info') && (
+                                 <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-600 mt-0.5">
+                                   <Info className="h-4 w-4" />
+                                 </div>
+                               )}
+                               {notification.type === 'sale' && (
+                                 <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-amber-600 mt-0.5">
+                                   <CheckCircle2 className="h-4 w-4" />
+                                 </div>
+                               )}
+                               
+                               <div className="flex-1 space-y-1">
+                                 <p className="text-sm leading-none font-medium">{notification.title}</p>
+                                 <p className="text-xs text-muted-foreground">{notification.message}</p>
+                                 <span className="text-[10px] text-muted-foreground/70">
+                                   {notification.createdAt?.toDate ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: pt }) : 'Agora'}
+                                 </span>
+                               </div>
+                               {!notification.read && (
+                                 <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                               )}
+                             </DropdownMenuItem>
+                           ))
+                         )}
+                       </div>
+                       <div className="p-2 border-t border-border/40 text-center">
+                         <Link to="/notifications" className="text-xs font-medium text-primary hover:underline">
+                           Ver todas as notificações
+                         </Link>
+                       </div>
+                     </DropdownMenuContent>
+                   </DropdownMenu>
 
-                    {/* Links de Utilizador */}
-                    {!isMounted ? <Skeleton className="h-8 w-32" /> : user ? (
-                        <>
-                            <div className="flex items-center gap-2 border-b pb-4">
-                                <User className="h-6 w-6" /><span className="font-semibold">{user.name}</span>
-                            </div>
-                            <MobileNavLink to="/profile">Perfil</MobileNavLink>
-                            <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
-                            <MobileNavLink to="/wallet">Carteira</MobileNavLink>
-                            <MobileNavLink to="/favorites">Favoritos</MobileNavLink>
-                            <MobileNavLink to="/inbox">Mensagens</MobileNavLink>
-                            <MobileNavLink to="/settings">Definições</MobileNavLink>
-                        </>
-                    ): (
-                        <>
-                            <MobileNavLink to="/login">Iniciar Sessão</MobileNavLink>
-                            <MobileNavLink to="/register">Registar</MobileNavLink>
-                        </>
-                    )}
-                    <MobileNavLink to="/sell">Vender</MobileNavLink>
-                    <Separator />
-                    
-                    {/* Links de Catálogo */}
-                    <MobileNavLink to="/catalog">Catálogo Completo</MobileNavLink>
-                    {categories.map((category) => (
-                         <MobileNavLink key={category} to={`/catalog?category=${category}`}><span className="ml-4 text-muted-foreground">{category}</span></MobileNavLink>
-                    ))}
-                    <Separator />
+                   <Link to="/profile" className="text-foreground hover:text-primary transition-colors p-1">
+                     <User className="h-6 w-6 stroke-[1.5]" />
+                   </Link>
+                   
+                   {isAdmin && (
+                     <Link to="/admin" className="text-red-500 hover:text-red-600 transition-colors p-1" title="Painel Admin">
+                       <ShieldAlert className="h-6 w-6 stroke-[1.5]" />
+                     </Link>
+                   )}
+                 </>
+               ) : (
+                 <Link to="/login" className="text-foreground hover:text-primary transition-colors p-1" aria-label="Entrar">
+                   <User className="h-6 w-6 stroke-[1.5]" />
+                 </Link>
+               )}
+            </div>
 
-                    {/* Links de Ajuda */}
-                    <MobileNavLink to="/about">Sobre</MobileNavLink>
-                    <MobileNavLink to="/faq">FAQ</MobileNavLink>
-                    <MobileNavLink to="/contact">Contacto</MobileNavLink>
-                    <Separator />
-                    
-                    {/* Opções de Tema e Logout */}
-                    <div className="flex justify-between items-center px-2">
-                        <span className="font-medium">Modo {theme === 'light' ? 'Escuro' : 'Claro'}</span>
-                        <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                            {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                        </Button>
-                    </div>
-                    {isMounted && user && (
-                         <Button variant="ghost" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>Terminar Sessão</Button>
-                    )}
-                 </nav>
-            </SheetContent>
-          </Sheet>
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              className="relative text-foreground hover:text-primary transition-colors p-1"
+            >
+              <ShoppingBag className="h-6 w-6 stroke-[1.5]" />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Full Screen Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="fixed inset-0 z-[60] bg-background flex flex-col"
+          >
+            {/* Menu Header */}
+            <div className="container mx-auto px-4 md:px-8 py-6 flex items-center justify-between">
+              <div className="text-sm font-medium text-muted-foreground">Navegação</div>
+              <button 
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2 hover:bg-muted rounded-full transition-colors"
+              >
+                <X className="h-6 w-6 stroke-[1.5]" />
+              </button>
+            </div>
+
+            {/* Menu Content */}
+            <div className="flex-1 container mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center md:items-stretch py-8 md:py-16 gap-8 md:gap-16">
+              
+              {/* Links List */}
+              <nav className="flex-1 flex flex-col justify-center items-start space-y-4 md:space-y-8">
+                {menuItems.map((item) => (
+                  <Link 
+                    key={item.name}
+                    to={item.href}
+                    className="group relative text-4xl md:text-6xl lg:text-7xl font-heading font-light text-foreground hover:text-primary transition-colors"
+                    onMouseEnter={() => setHoveredItem(item.image)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <span className="relative z-10">{item.name}</span>
+                    <span className="absolute left-0 bottom-2 w-0 h-[2px] bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+                  </Link>
+                ))}
+              </nav>
+
+              {/* Dynamic Image (Desktop Only) */}
+              <div className="hidden md:block w-1/2 lg:w-1/3 relative h-[60vh] overflow-hidden rounded-lg bg-muted">
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={hoveredItem || "default"}
+                    src={hoveredItem || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1000&auto=format&fit=crop"}
+                    alt="Menu Preview"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    initial={{ opacity: 0, scale: 1.1 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </AnimatePresence>
+                <div className="absolute inset-0 bg-black/10" />
+              </div>
+            </div>
+
+            {/* Menu Footer */}
+            <div className="container mx-auto px-4 md:px-8 py-8 border-t border-border flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground gap-4">
+              <div className="flex gap-6">
+                <a href="#" className="hover:text-foreground transition-colors">Instagram</a>
+                <a href="#" className="hover:text-foreground transition-colors">Pinterest</a>
+                <a href="#" className="hover:text-foreground transition-colors">Fale Conosco</a>
+              </div>
+              <p>Feito com amor e consciência 🌿</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Side Cart */}
+      <Suspense fallback={null}>
+        <DynamicSideCart open={isCartOpen} onOpenChange={setIsCartOpen} />
+      </Suspense>
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+    </>
   );
 }
-
-export default Header;

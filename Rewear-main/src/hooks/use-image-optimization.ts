@@ -3,8 +3,6 @@
  * Usa priority loading para os primeiros produtos visíveis
  */
 
-'use client';
-
 import { useEffect, useState } from 'react';
 import type { Product } from '@/lib/types';
 
@@ -41,7 +39,9 @@ export function getImagePlaceholder(width = 700, height = 475): string {
 /**
  * Otimiza URLs de imagens do Firebase Storage
  */
-export function optimizeImageUrl(url: string, width?: number): string {
+export function optimizeImageUrl(url: string | undefined | null, width?: number): string {
+  if (!url) return '';
+  
   // Se for Firebase Storage, adicionar parâmetros de otimização
   if (url.includes('firebasestorage.googleapis.com')) {
     const urlObj = new URL(url);

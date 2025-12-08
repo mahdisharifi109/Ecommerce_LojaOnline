@@ -1,207 +1,169 @@
-
-import { cn } from '@/lib/utils';
-
-import Image from "@/components/ui/image";
-import { useNavigate } from "react-router-dom";
-import type { Product } from "@/lib/types";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Heart, ShoppingBag, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useCart } from "@/context/cart-context";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/context/auth-context";
-import { useProducts } from "@/context/product-context";
-import { ShoppingCart, Pencil, Trash2, CheckCircle, ShieldCheck } from "lucide-react"; // Adicionado ShieldCheck
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import React from "react";
-import { optimizeImageUrl } from "@/hooks/use-image-optimization";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { Product } from "@/lib/types";
+import { StarRating } from "@/components/ui/star-rating";
 
 interface ProductCardProps {
   product: Product;
-  priority?: boolean; // Adicionar prop para controlar prioridade
-  index?: number; // Índice para otimização
+  className?: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, priority = false, index = 0 }) => {
-  const { addToCart } = useCart();
+export function ProductCard({ product, className }: ProductCardProps) {
+  const { user, toggleFavorite } = useAuth();
   const { toast } = useToast();
-  const { user, addToWallet } = useAuth();
-  const { deleteProduct, markAsSold } = useProducts();
-  const navigate = useNavigate();
+  const [isHovered, setIsHovered] = useState(false);
+  const [isLoadingFav, setIsLoadingFav] = useState(false);
 
-  const isOwner = user && user.uid === product.userId;
-  
-  // Otimizar carregamento: primeiras 6 imagens com prioridade
-  const shouldLoadWithPriority = priority || index < 6;
+  const isFavorite = user?.favorites?.includes(product.id) || false;
 
-  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('.card-actions-footer')) {
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast({
+        title: "Faça login",
+        description: "Precisa de estar autenticado para guardar favoritos.",
+        variant: "destructive",
+      });
       return;
     }
-    navigate(`/product/${product.id}`);
-  };
 
-  const handleActionClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
+    setIsLoadingFav(true);
 
-  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
-    handleActionClick(e);
-    addToCart({ product, quantity: 1 });
-    toast({
-      title: "Adicionado ao carrinho",
-      description: `${product.name} foi adicionado ao seu carrinho.`,
-    });
-  };
-
-  const handleEdit = (e: React.MouseEvent<HTMLButtonElement>) => {
-    handleActionClick(e);
-    navigate(`/product/${product.id}/edit`);
-  };
-
-  const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    handleActionClick(e);
     try {
-      await deleteProduct(product.id);
-      toast({ title: "Produto Removido", description: "O seu produto foi removido com sucesso." });
-    } catch (error) {
-      console.error('Erro ao apagar produto:', error);
-      toast({ variant: "destructive", title: "Erro ao apagar", description: `Não foi possível remover o produto.` });
-    }
-  };
-
-  const handleMarkAsSold = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    handleActionClick(e);
-    try {
-      await markAsSold(product.id);
-      await addToWallet(product.price);
-      toast({ title: "Produto Vendido!", description: `${product.price.toFixed(2)}€ foram adicionados à sua carteira.` });
-    } catch (error) {
-      toast({ variant: "destructive", title: "Erro", description: "Não foi possível concluir a ação." });
-    }
-  }
-
-  return (
-    <Card
-      onClick={handleCardClick}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleCardClick(e as unknown as React.MouseEvent<HTMLDivElement>);
-        }
-      }}
-      className={cn(
-        "flex flex-col overflow-hidden transition-smooth hover:shadow-floating hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 motion-reduce:transition-none motion-reduce:transform-none h-full cursor-pointer group border-border/50",
-        product.status === 'vendido' && "opacity-60 grayscale"
-      )}
-    >
-      <div className="flex-grow">
-        <CardHeader className="p-0">
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/30 rounded-t-[0.75rem]">
-            <Image
-              src={optimizeImageUrl(product.imageUrls[0], 700)}
-              alt={product.name}
-              fill
-              priority={shouldLoadWithPriority}
-              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover transition-organic group-hover:scale-110 motion-reduce:transition-none motion-reduce:transform-none"
-            />
-             {product.status === 'vendido' && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                    <Badge variant="destructive" className="text-lg font-bold shadow-lg">VENDIDO</Badge>
-                </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-5 space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <CardTitle className="text-base md:text-lg font-semibold leading-snug group-hover:text-primary transition-gentle line-clamp-2">
-              {product.name}
-            </CardTitle>
-            <div className="text-xl font-bold text-primary whitespace-nowrap">{product.price.toFixed(2)}€</div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {product.isVerified && (
-                <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 shadow-sm">
-                    <ShieldCheck className="mr-1 h-3 w-3" /> Verificado
-                </Badge>
-            )}
-            <Badge variant="outline" className="font-medium">{product.condition}</Badge>
-            <Badge variant="secondary" className="font-medium">{product.category}</Badge>
-          </div>
-        </CardContent>
-      </div>
+      await toggleFavorite(product.id);
       
-      <CardFooter className="p-5 pt-0 mt-auto card-actions-footer">
-        {isOwner ? (
-          <div className="w-full flex flex-col gap-2.5">
-            {product.status !== 'vendido' && (
-              <Button variant="outline" size="sm" className="w-full" onClick={handleMarkAsSold}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Marcar como Vendido
-              </Button>
-            )}
-            <div className="flex gap-2.5">
-              <Button variant="outline" size="sm" className="flex-1" onClick={handleEdit}>
-                <Pencil className="mr-1.5 h-4 w-4" />
-                Editar
-              </Button>
-              <AlertDialog onOpenChange={(open) => open && handleActionClick}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="flex-1" onClick={handleActionClick}>
-                    <Trash2 className="mr-1.5 h-4 w-4" />
-                    Apagar
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={handleActionClick}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Tem a certeza?</AlertDialogTitle>
-                    <AlertDialogDescription>Esta ação não pode ser desfeita. O seu produto será apagado permanentemente.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>Continuar</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-        ) : (
-          <Button 
-            className="w-full font-medium" 
-            onClick={handleAddToCart} 
-            disabled={!user || product.status === 'vendido'}
-          >
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            {product.status === 'vendido' ? "Artigo Indisponível" : (!user ? "Faça login para comprar" : "Adicionar ao Carrinho")}
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
-  );
-};
+      if (!isFavorite) {
+        toast({
+          title: "Guardado ❤️",
+          description: "Adicionado à sua lista de desejos.",
+          className: "bg-rose-50 border-rose-200 text-rose-800",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar os favoritos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingFav(false);
+    }
+  };
 
-export default React.memo(ProductCard, (prev, next) => {
-  const a = prev.product;
-  const b = next.product;
-  // Evita re-render se nada relevante do produto mudou
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("pt-PT", {
+      style: "currency",
+      currency: "EUR"
+    }).format(price);
+  };
+
   return (
-    a.id === b.id &&
-    a.price === b.price &&
-    a.status === b.status &&
-    a.name === b.name &&
-    a.imageUrls[0] === b.imageUrls[0] &&
-    a.isVerified === b.isVerified
+    <Link 
+      to={`/product/${product.id}`}
+      className={cn("group block h-full", className)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Card className="h-full overflow-hidden border-0 bg-transparent shadow-none transition-all duration-300">
+        {/* Image Container */}
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-secondary/20">
+          {product.imageUrls?.[0] ? (
+            <img
+              src={product.imageUrls[0]}
+              alt={product.name}
+              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-secondary/10 text-muted-foreground">
+              <ShoppingBag className="h-12 w-12 opacity-20" />
+            </div>
+          )}
+
+          {/* Badges Overlay */}
+          <div className="absolute left-3 top-3 flex flex-col gap-2">
+            {product.condition === "novo_com_etiqueta" && (
+              <Badge className="w-fit bg-white/80 text-foreground backdrop-blur-md hover:bg-white/90 border-0 shadow-sm font-medium px-3 py-1">
+                Novo
+              </Badge>
+            )}
+            {product.isVerified && (
+              <Badge className="w-fit bg-emerald-500/90 text-white backdrop-blur-md hover:bg-emerald-600/90 border-0 shadow-sm font-medium px-3 py-1">
+                Verificado
+              </Badge>
+            )}
+          </div>
+
+          {/* Favorite Button Overlay */}
+          <button
+            onClick={handleToggleFavorite}
+            disabled={isLoadingFav}
+            className={cn(
+              "absolute right-3 top-3 z-10 rounded-full p-2.5 transition-all duration-300 focus:outline-none",
+              isFavorite 
+                ? "bg-white text-rose-500 shadow-md scale-100" 
+                : "bg-black/20 text-white backdrop-blur-sm hover:bg-white hover:text-rose-500 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+            )}
+          >
+            <Heart 
+              className={cn(
+                "h-5 w-5 transition-all duration-300", 
+                isFavorite && "fill-current animate-in zoom-in duration-300"
+              )} 
+            />
+          </button>
+
+          {/* Quick Action Overlay */}
+          <div className={cn(
+            "absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent transition-opacity duration-300 flex justify-center",
+            isHovered ? "opacity-100" : "opacity-0"
+          )}>
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              className="w-full bg-white/90 text-black hover:bg-white backdrop-blur-sm font-medium shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+            >
+              Ver Detalhes
+            </Button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <CardContent className="p-4 pt-4 space-y-1">
+          <div className="flex justify-between items-start gap-2">
+            <h3 className="font-serif text-lg font-medium leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+              {product.name}
+            </h3>
+            <span className="font-medium text-lg whitespace-nowrap">
+              {formatPrice(product.price)}
+            </span>
+          </div>
+          
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span className="line-clamp-1">{product.brand || "Marca não especificada"}</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/50 border border-border/50">
+              {product.sizes?.[0] || "TU"}
+            </span>
+          </div>
+
+          {/* Rating */}
+          {product.rating !== undefined && (
+            <div className="flex items-center gap-1 pt-1">
+              <StarRating rating={product.rating} size="xs" readonly />
+              <span className="text-xs text-muted-foreground">({product.reviewCount || 0})</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   );
-});
+}

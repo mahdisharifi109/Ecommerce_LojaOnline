@@ -628,6 +628,139 @@ export const NotificationsService = {
       console.error('Erro ao marcar notificação como lida:', error);
       throw error;
     }
+  },
+
+  /**
+   * Marcar todas como lidas
+   */
+  async markAllAsRead(userId: string): Promise<void> {
+    try {
+      const notificationsRef = collection(db, 'notifications');
+      const q = query(
+        notificationsRef,
+        where('userId', '==', userId),
+        where('read', '==', false)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      
+      querySnapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, { read: true });
+      });
+      
+      await batch.commit();
+    } catch (error) {
+      console.error('Erro ao marcar todas notificações como lidas:', error);
+      throw error;
+    }
+  }
+};
+
+// ================================================================
+// MESSAGES SERVICE
+// ================================================================
+
+export const MessagesService = {
+  /**
+   * Criar conversa
+   */
+  async createConversation(conversationData: Omit<Conversation, 'id' | 'createdAt'>): Promise<string> {
+    try {
+      // Verificar se já existe conversa entre estes participantes para este produto
+      // Nota: Isso é uma simplificação. Em produção, idealmente usaríamos um ID determinístico ou query composta.
+      
+      const newConversationRef = doc(collection(db, 'conversations'));
+      await setDoc(newConversationRef, {
+        ...conversationData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      return newConversationRef.id;
+    } catch (error) {
+      console.error('Erro ao criar conversa:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Buscar conversas do utilizador
+   */
+  async getUserConversations(userId: string): Promise<Conversation[]> {
+    try {
+      const conversationsRef = collection(db, 'conversations');
+      const q = query(
+        conversationsRef,
+        where('participantIds', 'array-contains', userId),
+        orderBy('updatedAt', 'desc')
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Conversation[];
+    } catch (error) {
+      console.error('Erro ao buscar conversas:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Enviar mensagem
+   */
+  async sendMessage(conversationId: string, messageData: Omit<Message, 'id' | 'createdAt'>): Promise<string> {
+    try {
+      const batch = writeBatch(db);
+      
+      // 1. Criar mensagem na subcoleção
+      const messageRef = doc(collection(db, 'conversations', conversationId, 'messages'));
+      batch.set(messageRef, {
+        ...messageData,
+        createdAt: serverTimestamp()
+      });
+
+      // 2. Atualizar conversa com última mensagem
+      const conversationRef = doc(db, 'conversations', conversationId);
+      batch.update(conversationRef, {
+        lastMessage: {
+          text: messageData.text,
+          createdAt: serverTimestamp(),
+          senderId: messageData.senderId
+        },
+        updatedAt: serverTimestamp()
+      });
+
+      await batch.commit();
+      return messageRef.id;
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Buscar mensagens de uma conversa
+   */
+  async getMessages(conversationId: string, limitCount: number = 50): Promise<Message[]> {
+    try {
+      const messagesRef = collection(db, 'conversations', conversationId, 'messages');
+      const q = query(
+        messagesRef,
+        orderBy('createdAt', 'asc'), // Mensagens antigas primeiro
+        limit(limitCount)
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Message[];
+    } catch (error) {
+      console.error('Erro ao buscar mensagens:', error);
+      throw error;
+    }
   }
 };
 
@@ -640,5 +773,6 @@ export default {
   Users: UsersService,
   Reviews: ReviewsService,
   Transactions: TransactionsService,
-  Notifications: NotificationsService
+  Notifications: NotificationsService,
+  Messages: MessagesService
 };

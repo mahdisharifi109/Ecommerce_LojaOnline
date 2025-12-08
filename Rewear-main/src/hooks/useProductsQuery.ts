@@ -5,8 +5,6 @@
 // Substitui a lógica manual de localStorage do product-context
 // ================================================================
 
-"use client";
-
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ProductsService } from '@/lib/firestore-service';
 import type { Product } from '@/lib/types';

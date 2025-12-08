@@ -1,5 +1,3 @@
-"use client";
-
 import type { CartItem, Product, AddToCartPayload, AppUser } from '@/lib/types';
 import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase';

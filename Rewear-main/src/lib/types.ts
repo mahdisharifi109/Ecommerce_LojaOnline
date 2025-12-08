@@ -2,13 +2,18 @@
 
 import { Timestamp } from "firebase/firestore";
 
+export type NotificationType = 'offer' | 'system' | 'sale' | 'info';
+
 export type Notification = {
   id: string;
   userId: string; 
+  type: NotificationType;
+  title: string;
   message: string;
-  link: string; 
+  link?: string; 
   read: boolean;
   createdAt: Timestamp;
+  metadata?: any; // Para dados extras como preço da oferta, etc.
 };
 
 export type Product = {
@@ -16,8 +21,8 @@ export type Product = {
   name: string;
   description: string;
   price: number;
-  condition: 'Novo' | 'Muito bom' | 'Bom';
-  category: 'Roupa' | 'Calçado' | 'Livros' | 'Eletrónica' | 'Outro';
+  condition: string;
+  category: string;
   imageUrls: string[];
   imageHint: string;
   userEmail: string;
@@ -29,10 +34,13 @@ export type Product = {
   sizes?: string[];
   brand?: string;
   material?: string;
+  style?: string;
   color?: string;
   location?: string; // Localização do artigo (cidade/região)
   status?: 'disponível' | 'vendido';
   isVerified?: boolean;
+  rating?: number;
+  reviewCount?: number;
 };
 
 export interface AddToCartPayload {
@@ -70,13 +78,17 @@ export type Conversation = {
     lastMessage?: {
         text: string;
         createdAt: Timestamp;
+        senderId?: string;
+        read?: boolean;
     };
     product?: {
         id: string;
         name: string;
         image: string;
     };
+    unreadCount?: { [key: string]: number };
     createdAt: Timestamp;
+    updatedAt?: Timestamp;
 };
 
 // TIPO AppUser (CORRIGIDO: Extendido com novos campos e createdAt)
@@ -98,7 +110,29 @@ export interface AppUser {
   phone?: string;
   photoURL?: string;
   iban?: string; // IBAN para levantamentos
+  role?: 'user' | 'admin'; // Role do utilizador
   createdAt?: Timestamp; // Adicionado para a data de registo
+  addresses?: Address[];
+  notificationPreferences?: NotificationPreferences;
+}
+
+export interface NotificationPreferences {
+  email_marketing: boolean;
+  email_orders: boolean;
+  email_messages: boolean;
+  push_messages: boolean;
+  push_sales: boolean;
+}
+
+export interface Address {
+  id: string;
+  name: string; // e.g., "Casa", "Trabalho"
+  fullName: string;
+  street: string;
+  city: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
 }
 
 // NOVOS TIPOS PARA HISTÓRICO (para a aba de Transações)

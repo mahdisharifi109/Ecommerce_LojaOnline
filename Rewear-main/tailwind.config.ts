@@ -8,11 +8,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Escolha manual de fontes para dar personalidade ao projeto
-        // Open Sans: humanista, traz acolhimento ao corpo do texto
-        body: ['var(--font-body)', 'Open Sans', 'system-ui', 'sans-serif'],
-        // Lora: serif com curvas suaves, perfeita para títulos impactantes
-        heading: ['var(--font-heading)', 'Lora', 'Georgia', 'serif'],
+        // Wabi-Sabi Typography
+        body: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        heading: ['"Cormorant Garamond"', 'serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
