@@ -80,6 +80,7 @@ export default function Messages() {
   // Set first conversation as active if none selected
   useEffect(() => {
     if (!activeConversationId && conversations.length > 0 && !searchParams.get("seller")) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveConversationId(conversations[0].id);
     }
   }, [conversations, activeConversationId, searchParams]);

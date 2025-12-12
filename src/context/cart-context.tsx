@@ -79,19 +79,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsVerificationEnabled(prev => !prev);
   }, []);
   
-  // FUNÇÃO PRINCIPAL DO CHECKOUT
-
-  // Função para criar payload seguro para o backend
-  function createSecureCheckoutPayload() {
-    return {
-      cartItems,
-      isVerificationEnabled,
-      subtotal,
-      total,
-    };
-  }
-  
-  
   const cartCount = useMemo(() => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
   }, [cartItems]);
@@ -108,6 +95,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return subtotal + verificationFee;
   }, [subtotal, verificationFee]);
 
+  // FUNÇÃO PRINCIPAL DO CHECKOUT
+
+  // Função para criar payload seguro para o backend
+  const createSecureCheckoutPayload = useCallback(() => {
+    return {
+      cartItems,
+      isVerificationEnabled,
+      subtotal,
+      total,
+    };
+  }, [cartItems, isVerificationEnabled, subtotal, total]);
+
   const value = useMemo(() => ({
   cartItems,
   addToCart,
@@ -121,7 +120,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   isVerificationEnabled,
   toggleVerification,
   createSecureCheckoutPayload: createSecureCheckoutPayload,
-  }), [cartItems, addToCart, removeFromCart, updateItemQuantity, clearCart, cartCount, subtotal, verificationFee, total, isVerificationEnabled, toggleVerification]);
+  }), [cartItems, addToCart, removeFromCart, updateItemQuantity, clearCart, cartCount, subtotal, verificationFee, total, isVerificationEnabled, toggleVerification, createSecureCheckoutPayload]);
 
   return (
     <CartContext.Provider value={value}>

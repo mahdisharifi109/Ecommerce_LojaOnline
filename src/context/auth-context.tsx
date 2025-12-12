@@ -69,7 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!auth) {
       // Se auth for null (SSR), marcar como carregado e sair
-      setLoading(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoading((prev) => (prev ? false : prev));
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {

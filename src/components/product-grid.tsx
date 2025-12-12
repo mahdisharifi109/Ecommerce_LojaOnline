@@ -10,6 +10,16 @@ import { ShoppingBag, Loader2 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import type { Product } from "@/lib/types";
 import { usePrefetchProducts } from "@/hooks/use-prefetch"; 
+import { motion } from "framer-motion";
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
 
 // Componente de Skeleton para o ProductCard
 const ProductCardSkeleton = () => (
@@ -211,14 +221,27 @@ export function ProductGrid({ personalized = false }: ProductGridProps) {
         </div>
       ) : filteredProducts.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <motion.div 
+            variants={container} 
+            initial="hidden" 
+            animate="show" 
+            className="grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
             {filteredProducts.map((product, index) => {
               if (filteredProducts.length === index + 1 && showLoadMore) {
-                return <div ref={lastProductElementRef} key={product.id}><ProductCard product={product} /></div>
+                return (
+                  <motion.div variants={item} ref={lastProductElementRef} key={product.id}>
+                    <ProductCard product={product} />
+                  </motion.div>
+                )
               }
-              return <ProductCard key={product.id} product={product} />
+              return (
+                <motion.div variants={item} key={product.id}>
+                  <ProductCard product={product} />
+                </motion.div>
+              )
             })}
-          </div>
+          </motion.div>
           {isLoadingMore && (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />

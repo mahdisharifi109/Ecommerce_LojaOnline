@@ -77,7 +77,11 @@ export function ThemeProvider({
       root.setAttribute(attribute, effectiveTheme)
     }
 
-    setResolvedTheme(effectiveTheme)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setResolvedTheme((prev) => {
+      if (prev !== effectiveTheme) return effectiveTheme
+      return prev
+    })
   }, [theme, attribute, enableSystem, disableTransitionOnChange])
 
   // Escutar mudanças no tema do sistema

@@ -15,22 +15,29 @@ interface SelectOrInputProps {
 const OTHER_VALUE = "---outro---";
 
 export function SelectOrInput({ options, value, onChange, placeholder, id }: SelectOrInputProps) {
-  const isCustomValue = value && !options.includes(value);
-  const [selectedValue, setSelectedValue] = useState(isCustomValue ? OTHER_VALUE : value);
+  const [isCustomInput, setIsCustomInput] = useState(false);
 
   useEffect(() => {
-    const isValueInOptions = value && options.includes(value);
-    setSelectedValue(isValueInOptions ? value : (value ? OTHER_VALUE : ""));
+    if (value && !options.includes(value)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsCustomInput(true);
+    } else if (value && options.includes(value)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsCustomInput(false);
+    }
   }, [value, options]);
 
   const handleSelectChange = (newValue: string) => {
-    setSelectedValue(newValue);
-    if (newValue !== OTHER_VALUE) {
-      onChange(newValue);
+    if (newValue === OTHER_VALUE) {
+      setIsCustomInput(true);
+      onChange("");
     } else {
-      onChange('');
+      setIsCustomInput(false);
+      onChange(newValue);
     }
   };
+
+  const selectedValue = isCustomInput ? OTHER_VALUE : (value || "");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);

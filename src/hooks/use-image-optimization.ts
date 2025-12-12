@@ -9,14 +9,7 @@ import type { Product } from '@/lib/types';
 const PRIORITY_IMAGES_COUNT = 6; // Carregar as primeiras 6 imagens com prioridade
 
 export function useImageOptimization(products: Product[], index: number) {
-  const [shouldLoadPriority, setShouldLoadPriority] = useState(false);
-
-  useEffect(() => {
-    // Carregar com prioridade apenas os primeiros produtos
-    if (index < PRIORITY_IMAGES_COUNT) {
-      setShouldLoadPriority(true);
-    }
-  }, [index]);
+  const shouldLoadPriority = index < PRIORITY_IMAGES_COUNT;
 
   return {
     priority: shouldLoadPriority,

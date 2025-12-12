@@ -13,9 +13,10 @@ export function useNotifications() {
 
   useEffect(() => {
     if (!user?.uid) {
-      setNotifications([]);
-      setUnreadCount(0);
-      setLoading(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNotifications((prev) => (prev.length > 0 ? [] : prev));
+      setUnreadCount((prev) => (prev !== 0 ? 0 : prev));
+      setLoading((prev) => (prev ? false : prev));
       return;
     }
 

@@ -12,8 +12,9 @@ export function useConversations() {
 
   useEffect(() => {
     if (!user?.uid) {
-      setConversations([]);
-      setLoading(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConversations((prev) => (prev.length > 0 ? [] : prev));
+      setLoading((prev) => (prev ? false : prev));
       return;
     }
 
@@ -48,7 +49,8 @@ export function useChatMessages(conversationId: string | null) {
 
   useEffect(() => {
     if (!conversationId) {
-      setMessages([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMessages((prev) => (prev.length > 0 ? [] : prev));
       return;
     }
 
