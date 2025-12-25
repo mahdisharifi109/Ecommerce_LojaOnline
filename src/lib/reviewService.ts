@@ -19,7 +19,7 @@ export interface Review {
   userAvatar?: string;
   rating: number;
   comment: string;
-  createdAt: Timestamp;
+  createdAt?: Timestamp;
   productId: string;
 }
 

@@ -27,6 +27,7 @@ export type Product = {
   imageHint: string;
   userEmail: string;
   userName: string;
+  userAvatar?: string;
   userId: string;
   quantity: number;
   createdAt?: Timestamp;
